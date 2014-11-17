@@ -3,24 +3,24 @@
 package httpclient
 
 import (
-    "testing"
+    "encoding/json"
     "fmt"
-    "strings"
     "io/ioutil"
     "net/http"
-    "encoding/json"
+    "strings"
+    "testing"
 )
 
 // common response format on httpbin.org
 type ResponseInfo struct {
-    Gzipped bool `json:"gzipped"`
-    Method string `json:"method"`
-    Origin string `json:"origin"`
-    Useragent string `json:"user-agent"` // http://httpbin.org/user-agent
-    Form map[string]string `json:"form"`
-    Files map[string]string `json:"files"`
-    Headers map[string]string  `json:"headers"`
-    Cookies map[string]string  `json:"cookies"`
+    Gzipped   bool              `json:"gzipped"`
+    Method    string            `json:"method"`
+    Origin    string            `json:"origin"`
+    Useragent string            `json:"user-agent"` // http://httpbin.org/user-agent
+    Form      map[string]string `json:"form"`
+    Files     map[string]string `json:"files"`
+    Headers   map[string]string `json:"headers"`
+    Cookies   map[string]string `json:"cookies"`
 }
 
 func TestRequest(t *testing.T) {
@@ -38,10 +38,10 @@ func TestRequest(t *testing.T) {
 
     // post
     res, err = NewHttpClient(nil).
-        Post("http://httpbin.org/post", map[string]string {
-            "username": "dong",
-            "password": "******",
-        })
+        Post("http://httpbin.org/post", nil, map[string]string{
+        "username": "dong",
+        "password": "******",
+    })
 
     if err != nil {
         t.Error("post failed", err)
@@ -71,10 +71,10 @@ func TestRequest(t *testing.T) {
 
     // post, multipart
     res, err = NewHttpClient(nil).
-        Post("http://httpbin.org/post", map[string]string {
-            "message": "Hello world!",
-            "@image": "README.md",
-        })
+        Post("http://httpbin.org/post", nil, map[string]string{
+        "message": "Hello world!",
+        "@image":  "README.md",
+    })
 
     if err != nil {
         t.Error(err)
@@ -185,10 +185,10 @@ func TestHeaders(t *testing.T) {
     }
 
     useragent, ok := info.Headers["User-Agent"]
-    if !ok  || useragent != USERAGENT {
+    if !ok || useragent != USERAGENT {
         t.Error("useragent is not set properly")
     }
-    
+
     value, ok := info.Headers["Header1"]
     if !ok || value != "value1" {
         t.Error("custom header is not set properly")
@@ -212,8 +212,8 @@ func _TestProxy(t *testing.T) {
 
     res, err = NewHttpClient(nil).
         WithOption(OPT_PROXY_FUNC, func(*http.Request) (int, string, error) {
-            return PROXY_HTTP, proxy, nil
-        }).
+        return PROXY_HTTP, proxy, nil
+    }).
         Get("http://httpbin.org/get", nil)
 
     if err != nil {
@@ -267,15 +267,15 @@ func TestTimeout(t *testing.T) {
 }
 
 func TestRedirect(t *testing.T) {
-    c := NewHttpClient(Map {
+    c := NewHttpClient(Map{
         OPT_USERAGENT: "test redirect",
     })
     // follow locatioin
     res, err := c.
-        WithOptions(Map {
-            OPT_FOLLOWLOCATION: true,
-            OPT_MAXREDIRS: 10,
-        }).
+        WithOptions(Map{
+        OPT_FOLLOWLOCATION: true,
+        OPT_MAXREDIRS:      10,
+    }).
         Get("http://httpbin.org/redirect/3", nil)
 
     if err != nil {
@@ -346,12 +346,12 @@ func TestRedirect(t *testing.T) {
     // custom redirect policy
     res, err = c.
         WithOption(OPT_REDIRECT_POLICY, func(req *http.Request, via []*http.Request) error {
-            if req.URL.String() == "http://httpbin.org/redirect/1" {
-                return fmt.Errorf("should stop here")
-            }
+        if req.URL.String() == "http://httpbin.org/redirect/1" {
+            return fmt.Errorf("should stop here")
+        }
 
-            return nil
-        }).
+        return nil
+    }).
         Get("http://httpbin.org/redirect/3", nil)
 
     if err == nil {
@@ -371,10 +371,10 @@ func TestCookie(t *testing.T) {
     c := NewHttpClient(nil)
 
     res, err := c.
-        WithCookie(&http.Cookie {
-            Name: "username",
-            Value: "dong",
-        }).
+        WithCookie(&http.Cookie{
+        Name:  "username",
+        Value: "dong",
+    }).
         Get("http://httpbin.org/cookies", nil)
 
     if err != nil {
@@ -402,7 +402,6 @@ func TestCookie(t *testing.T) {
     if c.CookieValue("http://httpbin.org/cookies", "username") != "dong" {
         t.Error("cookie is not set properly")
     }
-
 
     // get old cookie
     res, err = c.
@@ -434,10 +433,10 @@ func TestCookie(t *testing.T) {
 
     // update cookie
     res, err = c.
-        WithCookie(&http.Cookie {
-            Name: "username",
-            Value: "octcat",
-        }).
+        WithCookie(&http.Cookie{
+        Name:  "username",
+        Value: "octcat",
+    }).
         Get("http://httpbin.org/cookies", nil)
 
     if err != nil {
@@ -534,6 +533,6 @@ func TestConcurrent(t *testing.T) {
     }
 
     for _, ch := range chs {
-        <- ch
+        <-ch
     }
 }

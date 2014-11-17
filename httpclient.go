@@ -7,8 +7,8 @@ package httpclient
 import (
     "fmt"
 
-    "strings"
     "bytes"
+    "strings"
 
     "time"
 
@@ -18,78 +18,78 @@ import (
 
     "net"
     "net/http"
-    "net/url"
     "net/http/cookiejar"
+    "net/url"
 
     "compress/gzip"
 
+    "encoding/json"
     "mime/multipart"
 )
 
 // Constants definations
 // CURL options, see https://github.com/bagder/curl/blob/169fedbdce93ecf14befb6e0e1ce6a2d480252a3/packages/OS400/curl.inc.in
 const (
-    VERSION = "0.4.0"
+    VERSION   = "0.4.0"
     USERAGENT = "go-httpclient v" + VERSION
 
-    PROXY_HTTP = 0
-    PROXY_SOCKS4 = 4
-    PROXY_SOCKS5 = 5
+    PROXY_HTTP    = 0
+    PROXY_SOCKS4  = 4
+    PROXY_SOCKS5  = 5
     PROXY_SOCKS4A = 6
 
     // CURL like OPT
-    OPT_AUTOREFERER = 58
-    OPT_FOLLOWLOCATION = 52
-    OPT_CONNECTTIMEOUT = 78
+    OPT_AUTOREFERER       = 58
+    OPT_FOLLOWLOCATION    = 52
+    OPT_CONNECTTIMEOUT    = 78
     OPT_CONNECTTIMEOUT_MS = 156
-    OPT_MAXREDIRS = 68
-    OPT_PROXYTYPE = 101
-    OPT_TIMEOUT = 13
-    OPT_TIMEOUT_MS = 155
-    OPT_COOKIEJAR = 10082
-    OPT_INTERFACE = 10062
-    OPT_PROXY = 10004
-    OPT_REFERER = 10016
-    OPT_USERAGENT = 10018
+    OPT_MAXREDIRS         = 68
+    OPT_PROXYTYPE         = 101
+    OPT_TIMEOUT           = 13
+    OPT_TIMEOUT_MS        = 155
+    OPT_COOKIEJAR         = 10082
+    OPT_INTERFACE         = 10062
+    OPT_PROXY             = 10004
+    OPT_REFERER           = 10016
+    OPT_USERAGENT         = 10018
 
     // Other OPT
     OPT_REDIRECT_POLICY = 100000
-    OPT_PROXY_FUNC = 100001
-
+    OPT_PROXY_FUNC      = 100001
 )
 
 // String map of options
-var CONST = map[string]int {
-    "OPT_AUTOREFERER": 58,
-    "OPT_FOLLOWLOCATION": 52,
-    "OPT_CONNECTTIMEOUT": 78,
+var CONST = map[string]int{
+    "OPT_AUTOREFERER":       58,
+    "OPT_FOLLOWLOCATION":    52,
+    "OPT_CONNECTTIMEOUT":    78,
     "OPT_CONNECTTIMEOUT_MS": 156,
-    "OPT_MAXREDIRS": 68,
-    "OPT_PROXYTYPE": 101,
-    "OPT_TIMEOUT": 13,
-    "OPT_TIMEOUT_MS": 155,
-    "OPT_COOKIEJAR": 10082,
-    "OPT_INTERFACE": 10062,
-    "OPT_PROXY": 10004,
-    "OPT_REFERER": 10016,
-    "OPT_USERAGENT": 10018,
+    "OPT_MAXREDIRS":         68,
+    "OPT_PROXYTYPE":         101,
+    "OPT_TIMEOUT":           13,
+    "OPT_TIMEOUT_MS":        155,
+    "OPT_COOKIEJAR":         10082,
+    "OPT_INTERFACE":         10062,
+    "OPT_PROXY":             10004,
+    "OPT_REFERER":           10016,
+    "OPT_USERAGENT":         10018,
 
     "OPT_REDIRECT_POLICY": 100000,
-    "OPT_PROXY_FUNC": 100001,
+    "OPT_PROXY_FUNC":      100001,
 }
 
 // Default options for any clients.
-var defaultOptions = map[int]interface{} {
+var defaultOptions = map[int]interface{}{
     OPT_FOLLOWLOCATION: true,
-    OPT_MAXREDIRS: 10,
-    OPT_AUTOREFERER: true,
-    OPT_USERAGENT: USERAGENT,
-    OPT_COOKIEJAR: true,
+    OPT_MAXREDIRS:      10,
+    OPT_AUTOREFERER:    true,
+    OPT_USERAGENT:      USERAGENT,
+    OPT_COOKIEJAR:      true,
 }
 
 // These options affect transport, transport may not be reused if you change any
 // of these options during a request.
-var transportOptions = []int {
+var transportOptions = []int{
     OPT_CONNECTTIMEOUT,
     OPT_CONNECTTIMEOUT_MS,
     OPT_PROXYTYPE,
@@ -102,11 +102,9 @@ var transportOptions = []int {
 
 // These options affect cookie jar, jar may not be reused if you change any of
 // these options during a request.
-var jarOptions = []int {
+var jarOptions = []int{
     OPT_COOKIEJAR,
 }
-
-
 
 // Thin wrapper of http.Response(can also be used as http.Response).
 type Response struct {
@@ -142,7 +140,7 @@ func (this *Response) ToString() (string, error) {
 }
 
 // Prepare a request.
-func prepareRequest(method string, url_ string, headers map[string]string, 
+func prepareRequest(method string, url_ string, headers map[string]string,
     body io.Reader, options map[int]interface{}) (*http.Request, error) {
     req, err := http.NewRequest(method, url_, body)
 
@@ -172,7 +170,7 @@ func prepareRequest(method string, url_ string, headers map[string]string,
 }
 
 // Prepare a transport.
-// 
+//
 // Handles timemout, proxy and maybe other transport related options here.
 func prepareTransport(options map[int]interface{}) (http.RoundTripper, error) {
     transport := &http.Transport{}
@@ -185,7 +183,7 @@ func prepareTransport(options map[int]interface{}) (http.RoundTripper, error) {
         }
     } else if connectTimeout_, ok := options[OPT_CONNECTTIMEOUT]; ok {
         if connectTimeout, ok := connectTimeout_.(int); ok {
-            connectTimeoutMS = connectTimeout * 1000    
+            connectTimeoutMS = connectTimeout * 1000
         } else {
             return nil, fmt.Errorf("OPT_CONNECTTIMEOUT must be int")
         }
@@ -199,23 +197,23 @@ func prepareTransport(options map[int]interface{}) (http.RoundTripper, error) {
         }
     } else if timeout_, ok := options[OPT_TIMEOUT]; ok {
         if timeout, ok := timeout_.(int); ok {
-            timeoutMS = timeout * 1000    
+            timeoutMS = timeout * 1000
         } else {
             return nil, fmt.Errorf("OPT_TIMEOUT must be int")
         }
     }
 
-    // fix connect timeout(important, or it might cause a long time wait during 
+    // fix connect timeout(important, or it might cause a long time wait during
     //connection)
     if timeoutMS > 0 && (connectTimeoutMS > timeoutMS || connectTimeoutMS == 0) {
         connectTimeoutMS = timeoutMS
     }
 
-    transport.Dial = func (network, addr string) (net.Conn, error) {
+    transport.Dial = func(network, addr string) (net.Conn, error) {
         var conn net.Conn
         var err error
         if connectTimeoutMS > 0 {
-            conn, err = net.DialTimeout(network, addr, time.Duration(connectTimeoutMS) * time.Millisecond)
+            conn, err = net.DialTimeout(network, addr, time.Duration(connectTimeoutMS)*time.Millisecond)
             if err != nil {
                 return nil, err
             }
@@ -235,7 +233,7 @@ func prepareTransport(options map[int]interface{}) (http.RoundTripper, error) {
 
     // proxy
     if proxyFunc_, ok := options[OPT_PROXY_FUNC]; ok {
-        if proxyFunc, ok := proxyFunc_.(func (*http.Request) (int, string, error)); ok {
+        if proxyFunc, ok := proxyFunc_.(func(*http.Request) (int, string, error)); ok {
             transport.Proxy = func(req *http.Request) (*url.URL, error) {
                 proxyType, u_, err := proxyFunc(req)
                 if err != nil {
@@ -310,20 +308,20 @@ func prepareRedirect(options map[int]interface{}) (func(req *http.Request, via [
         redirectPolicy = func(req *http.Request, via []*http.Request) error {
             // no follow
             if !followlocation || maxredirs <= 0 {
-                return &Error {
-                    Code: ERR_REDIRECT_POLICY,
+                return &Error{
+                    Code:    ERR_REDIRECT_POLICY,
                     Message: fmt.Sprintf("redirect not allowed"),
                 }
             }
 
             if len(via) >= maxredirs {
-                return &Error {
-                    Code: ERR_REDIRECT_POLICY,
+                return &Error{
+                    Code:    ERR_REDIRECT_POLICY,
                     Message: fmt.Sprintf("stopped after %d redirects", len(via)),
                 }
             }
 
-            last := via[len(via) - 1]
+            last := via[len(via)-1]
             // keep necessary headers
             // TODO: pass all headers or add other headers?
             if useragent := last.Header.Get("User-Agent"); useragent != "" {
@@ -362,16 +360,33 @@ func prepareJar(options map[int]interface{}) (http.CookieJar, error) {
     return jar, nil
 }
 
+func prepareJson(inputs []interface{}) (io.Reader, error) {
+    retval := new(bytes.Buffer)
+
+    for _, input := range inputs {
+        rawJson, err := json.Marshal(input)
+        if err != nil {
+            return nil, err
+        }
+
+        retval.Write(rawJson)
+        retval.Write([]byte("\n"))
+    }
+
+    // all done
+    return retval, nil
+}
+
 // Create an HTTP client.
-// 
+//
 // Specify default options and headers of this client.
 func NewHttpClient(defaults Map) *HttpClient {
     options, headers := parseMap(defaults)
     c := &HttpClient{
-        Options: options,
-        Headers: headers,
+        Options:        options,
+        Headers:        headers,
         reuseTransport: true,
-        reuseJar: true,
+        reuseJar:       true,
     }
 
     return c
@@ -412,7 +427,7 @@ type HttpClient struct {
     lock *sync.Mutex
 }
 
-// Begin marks the begining of a request, it's necessary for concurrent 
+// Begin marks the begining of a request, it's necessary for concurrent
 // requests.
 func (this *HttpClient) Begin() *HttpClient {
     if this.lock == nil {
@@ -431,7 +446,7 @@ func (this *HttpClient) reset() {
     this.reuseTransport = true
     this.reuseJar = true
 
-    // nil means the Begin has not been called, asume requests are not 
+    // nil means the Begin has not been called, asume requests are not
     // concurrent.
     if this.lock != nil {
         this.lock.Unlock()
@@ -495,9 +510,9 @@ func (this *HttpClient) WithCookie(cookies ...*http.Cookie) *HttpClient {
 }
 
 // Start a request, and get the response.
-// 
+//
 // Usually we just need the Get and Post method.
-func (this *HttpClient) Do(method string, url string, headers map[string]string, 
+func (this *HttpClient) Do(method string, url string, headers map[string]string,
     body io.Reader) (*Response, error) {
     options := mergeOptions(defaultOptions, this.Options, this.oneTimeOptions)
     headers = mergeHeaders(this.Headers, this.oneTimeHeaders, headers)
@@ -545,10 +560,10 @@ func (this *HttpClient) Do(method string, url string, headers map[string]string,
         return nil, err
     }
 
-    c := &http.Client {
-        Transport: transport,
+    c := &http.Client{
+        Transport:     transport,
         CheckRedirect: redirect,
-        Jar: jar,
+        Jar:           jar,
     }
 
     req, err := prepareRequest(method, url, headers, body, options)
@@ -570,7 +585,7 @@ func (this *HttpClient) Do(method string, url string, headers map[string]string,
 }
 
 // The GET request
-func (this *HttpClient) Get(url string, params map[string]string) (*Response, 
+func (this *HttpClient) Get(url string, params map[string]string) (*Response,
     error) {
     url = addParams(url, params)
 
@@ -578,34 +593,39 @@ func (this *HttpClient) Get(url string, params map[string]string) (*Response,
 }
 
 // The POST request
-// 
-// With multipart set to true, the request will be encoded as 
-// "multipart/form-data". 
-// 
-// If any of the params key starts with "@", it is considered as a form file 
+//
+// With multipart set to true, the request will be encoded as
+// "multipart/form-data".
+//
+// If any of the params key starts with "@", it is considered as a form file
 // (similar to CURL but different).
-func (this *HttpClient) Post(url string, params map[string]string) (*Response, 
+func (this *HttpClient) Post(url string, pathParams map[string]string, formParams map[string]string) (*Response,
     error) {
     // Post with files should be sent as multipart.
-    if checkParamFile(params) {
-        return this.PostMultipart(url, params)
+    if checkParamFile(formParams) {
+        return this.PostMultipart(url, pathParams, formParams)
     }
+
+    url = addParams(url, pathParams)
 
     headers := make(map[string]string)
     headers["Content-Type"] = "application/x-www-form-urlencoded"
-    body := strings.NewReader(paramsToString(params))
+    body := strings.NewReader(paramsToString(formParams))
 
     return this.Do("POST", url, headers, body)
 }
 
 // Post with the request encoded as "multipart/form-data".
-func (this *HttpClient) PostMultipart(url string, params map[string]string) (
+func (this *HttpClient) PostMultipart(url string, pathParams map[string]string, formParams map[string]string) (
     *Response, error) {
     body := &bytes.Buffer{}
     writer := multipart.NewWriter(body)
 
+    // add any query_path params to the URL
+    url = addParams(url, pathParams)
+
     // check files
-    for k, v := range params {
+    for k, v := range formParams {
         // is file
         if k[0] == '@' {
             err := addFormFile(writer, k[1:], v)
@@ -627,9 +647,53 @@ func (this *HttpClient) PostMultipart(url string, params map[string]string) (
     return this.Do("POST", url, headers, body)
 }
 
+// Post with the request encoded as "application/json".
+func (this *HttpClient) PostJson(url string, pathParams map[string]string, jsonParams []interface{}) (
+    *Response, error) {
+    body, err := prepareJson(jsonParams)
+    if err != nil {
+        return nil, err
+    }
+
+    // add any query_path params to the URL
+    url = addParams(url, pathParams)
+
+    headers := make(map[string]string)
+    headers["Content-Type"] = "application/json"
+
+    return this.Do("POST", url, headers, body)
+}
+
+// Put with the request encoded as "application/json".
+func (this *HttpClient) PutJson(url string, pathParams map[string]string, jsonParams []interface{}) (
+    *Response, error) {
+    body, err := prepareJson(jsonParams)
+    if err != nil {
+        return nil, err
+    }
+
+    // add any query_path params to the URL
+    url = addParams(url, pathParams)
+
+    headers := make(map[string]string)
+    headers["Content-Type"] = "application/json"
+
+    return this.Do("PUT", url, headers, body)
+}
+
+// Delete
+func (this *HttpClient) Delete(url string, pathParams map[string]string) (
+    *Response, error) {
+
+    // add any query_path params to the URL
+    url = addParams(url, pathParams)
+
+    return this.Do("DELETE", url, nil, nil)
+}
+
 // Get cookies of the client jar.
 func (this *HttpClient) Cookies(url_ string) []*http.Cookie {
-    if (this.jar != nil) {
+    if this.jar != nil {
         u, _ := url.Parse(url_)
         return this.jar.Cookies(u)
     }
